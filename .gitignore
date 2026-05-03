@@ -1,0 +1,60 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Django
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# CareGap specific — large data (never commit these)
+synthea_california.duckdb
+*.duckdb
+california*/
+data/
+
+# Runtime-generated caches (never commit)
+cache/
+patients/data/*.pkl
+output/
+
+# Temp / diagnostic scripts (development only)
+tmp/
+staticfiles/
+
+# Leftover text files
+desktop_files.txt
+dir_listing.txt
+out.txt
+traceback.txt
+check.txt
+uc_test.txt
+
+# RAG vector index (too large)
+rag/faiss_index/
+
+# Ignore large binary recordings
+*.webp
+*.mp4
+
+# Ignore zip files
+*.zip
+
+# Ignore diagnostic scripts
+diagnostic_all.py
+debug_trace.py
+verify_endpoints.py
+api_debug.py
+patch_views.py
