@@ -1,0 +1,583 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CareGap : Patient Risk Management</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="logo">
+      <div class="brand">CareGap<br>Analytics</div>
+      <div class="sub">Patient Risk Management</div>
+    </div>
+    <div class="slabel">Reports (Dashboards)</div>
+    <div class="nav-item active" id="nav-explorer" onclick="showSection('explorer', this)">
+      <svgi>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+          <polyline points="2 17 12 22 22 17"></polyline>
+          <polyline points="2 12 12 17 22 12"></polyline>
+        </svg>
+      </svgi>
+      Analytics Explorer
+    </div>
+    <div class="nav-item" onclick="showSection('dashboard', this)">
+      <svgi>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+          <circle cx="9" cy="7" r="4"></circle>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+        </svg>
+      </svgi>
+      Population Dashboard
+    </div>
+    <div class="nav-item" data-section="ai_assistant" onclick="showSection('ai_assistant', this)">
+      <svgi>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+        </svg>
+      </svgi>
+      AI Suggestions
+    </div>
+
+    <div class="slabel">Patient Detail</div>
+    <div class="nav-item" onclick="showSection('search',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8" />
+        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+      </svg>
+      Patient Search
+    </div>
+    <div class="nav-item" onclick="showSection('profile',this)" id="nav-profile" style="display:none">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+        <circle cx="12" cy="7" r="4" />
+      </svg>
+      <span id="nav-profile-name">Patient Profile</span>
+    </div>
+
+    <div class="slabel">Clinical Actions</div>
+    <div class="nav-item" onclick="showSection('triage', this)">
+      <svgi>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+          <line x1="12" y1="9" x2="12" y2="13"></line>
+          <line x1="12" y1="17" x2="12.01" y2="17"></line>
+        </svg>
+      </svgi>
+      🚨 Action Required
+    </div>
+
+  </nav>
+
+  <!-- MAIN -->
+  <main class="main">
+    <header class="topbar">
+      <div class="topbar-title">CareGap · <span>Patient Risk Engine</span></div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <div class="rag-status" id="ragStatus">
+          <div class="rag-dot"></div>
+          <span id="ragText">AI: Initializing...</span>
+        </div>
+        <button class="btn btn-outline" style="padding:5px 12px;font-size:.72rem" onclick="syncAllData()">
+          <span style="font-size:1.1rem;margin-right:4px">↻</span> Sync Data
+        </button>
+      </div>
+    </header>
+
+    <div class="content">
+
+      <!-- ═══ SECTION: SEARCH ═══ -->
+      <div id="sec-search" class="section">
+        <div style="display:flex;justify-content:center;padding-top:40px;padding-bottom:24px;">
+          <div class="search-hero">
+            <h1 style="font-family:'DM Serif Display',serif;font-size:2rem;margin-bottom:6px;">Find a Patient</h1>
+            <div class="desc-box">
+              <strong>Patient Search:</strong> Query the entire 30,000+ patient database by name or city to view their
+              individual clinical profiles, risk assessments, and care gaps.
+            </div>
+
+            <div class="search-wrap">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+              <input type="text" id="patient-search-input" placeholder="e.g. Maggio, Morton, Los Angeles…"
+                oninput="filterPatients(this.value)" autocomplete="off" />
+            </div>
+
+            <div id="cohort-filters" style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;">
+              <button class="cohort-btn active" data-cohort="" onclick="setCohortFilter(this,'')">All</button>
+              <button class="cohort-btn" data-cohort="chronic"
+                onclick="setCohortFilter(this,'chronic')">Chronic</button>
+              <button class="cohort-btn" data-cohort="at_risk" onclick="setCohortFilter(this,'at_risk')">At
+                Risk</button>
+              <button class="cohort-btn" data-cohort="pediatric"
+                onclick="setCohortFilter(this,'pediatric')">Pediatric</button>
+            </div>
+
+            <div class="search-count" id="search-count" style="margin-top:14px;font-size:.82rem;color:var(--text3);">
+            </div>
+
+            <div id="search-results" style="
+              background:var(--surface);
+              border:1px solid var(--border2);
+              border-radius:12px;
+              margin-top:8px;
+              max-height:calc(100vh - 280px);
+              overflow-y:auto;
+              display:flex;
+              flex-direction:column;
+            ">
+              <div style="padding:28px;text-align:center;color:var(--text3);font-size:.85rem;">
+                <div class="spin" style="margin:0 auto 12px;"></div>Loading patients…
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ SECTION: PATIENT PROFILE ═══ -->
+      <div id="sec-profile" class="section">
+        <!-- Patient Card -->
+        <div id="patient-card-wrap">
+          <div class="empty">
+            <div class="spin"></div>
+          </div>
+        </div>
+
+        <div class="tabs">
+          <div class="tab active" onclick="showTab('risk',this)">⬡ Risk Assessment</div>
+          <div class="tab" onclick="showTab('trends',this)">📈 Trends</div>
+          <div class="tab" onclick="showTab('urgentcare',this)">🏥 Urgent Care</div>
+          <div class="tab" onclick="showTab('history',this)">📋 History</div>
+        </div>
+
+        <!-- Tab: Risk -->
+        <div id="tab-risk" class="tab-content">
+          <div id="risk-content" style="padding:20px 0">
+            <div class="empty">
+              <div class="spin"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab: Urgent Care -->
+        <div id="tab-urgentcare" class="tab-content" style="display:none">
+          <div class="panel" style="margin-top:20px">
+            <div class="panel-h">
+              <div>
+                <h3>Nearby Urgent Care Facilities</h3>
+                <p>Matched to patient city and insurance type</p>
+              </div>
+              <span class="pbadge pbadge-red">HIGH Risk Recommendation</span>
+            </div>
+            <div id="uc-content">
+              <div class="empty" style="padding:30px">
+                <p>Load a patient first.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab: Trends (Charts) -->
+        <div id="tab-trends" class="tab-content" style="display:none">
+          <div id="trends-empty" class="empty"
+            style="display:none;padding:40px;margin-top:20px;background:var(--surface);border-radius:12px">
+            <p>Not enough historical data to generate trend charts.</p>
+          </div>
+          <div id="trends-content" style="display:none;margin-top:20px">
+            <div class="panel">
+              <div class="panel-h">
+                <div>
+                  <h3>HbA1c History</h3>
+                  <p>Longitudinal blood sugar trends</p>
+                </div>
+              </div>
+              <div id="wrap-hba1c" style="padding:18px;height:280px"><canvas id="chart-hba1c-trend"></canvas></div>
+            </div>
+            <div class="panel">
+              <div class="panel-h">
+                <div>
+                  <h3>Blood Pressure History</h3>
+                  <p>Systolic & Diastolic readings</p>
+                </div>
+              </div>
+              <div id="wrap-bp" style="padding:18px;height:280px"><canvas id="chart-bp-trend"></canvas></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab: History -->
+        <div id="tab-history" class="tab-content" style="display:none">
+          <div class="two-col" style="margin-top:20px">
+            <div class="panel">
+              <div class="panel-h">
+                <div>
+                  <h3>Recent Observations</h3>
+                  <p>Latest labs and vitals</p>
+                </div>
+              </div>
+              <div id="obs-content" style="overflow-x:auto">
+                <div class="empty" style="padding:24px">
+                  <p>Loading…</p>
+                </div>
+              </div>
+            </div>
+            <div class="panel">
+              <div class="panel-h">
+                <div>
+                  <h3>Active Conditions</h3>
+                  <p>Current diagnoses</p>
+                </div>
+              </div>
+              <div id="cond-content" style="overflow-x:auto">
+                <div class="empty" style="padding:24px">
+                  <p>Loading…</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-h">
+              <div>
+                <h3>Recent Encounters</h3>
+                <p>Visit history</p>
+              </div>
+            </div>
+            <div id="enc-content" style="overflow-x:auto">
+              <div class="empty" style="padding:24px">
+                <p>Loading…</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ SECTION: POPULATION DASHBOARD ═══ -->
+      <div id="sec-dashboard" class="section">
+        <div class="view-header" style="margin-bottom: 12px;">
+          <h2>Population Analytics</h2>
+        </div>
+        <div class="desc-box">
+          <strong>Population Dashboard:</strong> A high-level overview of the clinic's chronic disease metrics,
+          generating real-time statistical distributions and 30-day resource needs.
+        </div>
+        <div id="dashboard-stats-content">
+          <!-- Charts injected here -->
+        </div>
+      </div>
+
+      <!-- ═══ SECTION: TRIAGE VIEW ═══ -->
+      <div id="sec-triage" class="section">
+        <div class="view-header" style="margin-bottom: 12px;">
+          <h2>🚨 Action Required</h2>
+        </div>
+        <div class="desc-box">
+          <strong>Triage View:</strong> A prioritized queue containing high-risk and emergency patients who require
+          immediate clinical outreach.
+        </div>
+
+        <div class="panel" style="margin-bottom: 24px; border-top: 2px solid var(--red);">
+          <div class="panel-h">
+            <div>
+              <h3 style="color:var(--red)">Emergency Room Follow-Up Needed</h3>
+              <p>Critical vitals (SBP ≥ 160 or HbA1c ≥ 9.0). Dispatch immediately.</p>
+            </div>
+          </div>
+          <div id="triage-emergency-content" style="padding: 10px 18px">
+            <div class="empty">
+              <div class="spin"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel" style="border-top: 2px solid var(--amber);">
+          <div class="panel-h">
+            <div>
+              <h3 style="color:var(--amber)">Urgent Care Needed</h3>
+              <p>High-risk cohort requiring same-day or next-day clinic visits.</p>
+            </div>
+          </div>
+          <div id="triage-urgent-content" style="padding: 10px 18px">
+            <div class="empty">
+              <div class="spin"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ SECTION: AI ASSISTANT ═══ -->
+      <div id="sec-ai_assistant" class="section">
+        <div class="view-header" style="margin-bottom: 12px;">
+          <h2>AI Suggestions</h2>
+        </div>
+        <div class="desc-box">
+          <strong>AI Assistant:</strong> Speak naturally to query patient data, request automated interpretations of
+          clinical guidelines, or get care coordination recommendations.
+        </div>
+        <div class="panel" style="padding:24px; max-width: 800px; margin: 0 auto;">
+          <div id="ai-chat-history"
+            style="height: 300px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin-bottom: 16px; background: var(--bg3);">
+            <div style="color: var(--text3); font-size: .85rem; text-align: center;">Choose a patient to start an AI
+              consultation.</div>
+          </div>
+          <div style="display:flex; gap: 10px;">
+            <input type="text" id="ai-query-input" placeholder="Ask a clinical question about the patient..."
+              style="flex:1; padding: 12px; border: 1.5px solid var(--border2); border-radius: 8px; outline: none;">
+            <button class="btn btn-primary" onclick="sendAICoordinatorQuery()">Ask AI</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ SECTION: ANALYTICS EXPLORER ═══ -->
+      <div id="sec-explorer" class="section active">
+        <div class="ph" style="margin-bottom:20px">
+          <h2>Analytics Explorer</h2>
+          <div class="desc-box" style="margin-top:12px;">
+            <strong>Analytics Explorer:</strong> Deep-dive into patient demographics and condition distributions by
+            slicing and dicing the live synthetic population data.
+          </div>
+        </div>
+
+        <!-- ── Tab bar ──────────────────────────────────────────────── -->
+        <div style="display:flex;border-bottom:1px solid var(--border);margin-bottom:22px">
+          <button id="exp-tab-btn-population" onclick="showExplorerTab('population')" style="padding:10px 22px;background:none;border:none;border-bottom:2px solid var(--accent);
+                         color:var(--text);font-family:inherit;font-size:.88rem;font-weight:600;cursor:pointer;
+                         margin-bottom:-1px">
+            Population Analysis
+          </button>
+          <button id="exp-tab-btn-predictive" onclick="showExplorerTab('predictive')" style="padding:10px 22px;background:none;border:none;border-bottom:2px solid transparent;
+                         color:var(--text3);font-family:inherit;font-size:.88rem;font-weight:600;cursor:pointer;
+                         margin-bottom:-1px">
+            Predictive Modeling
+          </button>
+        </div>
+
+        <!-- ══ Tab 1: Population Analysis ═════════════════════════════ -->
+        <div id="exp-pane-population">
+          <div style="display:flex;gap:20px;align-items:flex-start">
+
+            <!-- ── Filter Panel ───────────────────────────────────── -->
+            <div style="width:252px;flex-shrink:0">
+              <div class="panel" style="padding:20px">
+                <div style="font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;
+                            color:var(--text3);font-weight:600;margin-bottom:16px">
+                  Filter Population
+                </div>
+
+                <!-- Cohort -->
+                <div style="margin-bottom:14px">
+                  <label style="font-size:.76rem;color:var(--text3);display:block;margin-bottom:5px">Cohort</label>
+                  <select id="flt-cohort"
+                    style="width:100%;background:var(--bg3);border:1px solid var(--border2);
+                    border-radius:8px;padding:8px 10px;color:var(--text);font-family:inherit;font-size:.84rem;outline:none">
+                    <option value="">All Cohorts</option>
+                    <option value="chronic">Chronic (HTN / T2D)</option>
+                    <option value="at_risk">At Risk</option>
+                    <option value="pediatric">Pediatric</option>
+                    <option value="deceased">Deceased</option>
+                  </select>
+                </div>
+
+                <!-- Gender -->
+                <div style="margin-bottom:14px">
+                  <label style="font-size:.76rem;color:var(--text3);display:block;margin-bottom:5px">Gender</label>
+                  <select id="flt-gender"
+                    style="width:100%;background:var(--bg3);border:1px solid var(--border2);
+                    border-radius:8px;padding:8px 10px;color:var(--text);font-family:inherit;font-size:.84rem;outline:none">
+                    <option value="">All Genders</option>
+                    <option value="M">Male</option>
+                    <option value="F">Female</option>
+                  </select>
+                </div>
+
+                <!-- Age Range -->
+                <div style="margin-bottom:14px">
+                  <label style="font-size:.76rem;color:var(--text3);display:block;margin-bottom:5px">Age Range</label>
+                  <div style="display:flex;gap:8px;align-items:center">
+                    <input type="number" id="flt-age-min" placeholder="Min" min="0" max="120" style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;
+                             padding:8px 8px;color:var(--text);font-family:inherit;font-size:.84rem;outline:none">
+                    <span style="color:var(--text3);font-size:.8rem;flex-shrink:0">–</span>
+                    <input type="number" id="flt-age-max" placeholder="Max" min="0" max="120" style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;
+                             padding:8px 8px;color:var(--text);font-family:inherit;font-size:.84rem;outline:none">
+                  </div>
+                </div>
+
+                <!-- Condition -->
+                <div style="margin-bottom:20px">
+                  <label style="font-size:.76rem;color:var(--text3);display:block;margin-bottom:5px">Condition</label>
+                  <select id="flt-condition"
+                    style="width:100%;background:var(--bg3);border:1px solid var(--border2);
+                    border-radius:8px;padding:8px 10px;color:var(--text);font-family:inherit;font-size:.84rem;outline:none">
+                    <option value="">All Conditions</option>
+                    <option value="hypertension">Hypertension</option>
+                    <option value="diabetes">Diabetes (T2D)</option>
+                  </select>
+                </div>
+
+                <button class="btn btn-primary" style="width:100%;margin-bottom:8px" onclick="applyExplorerFilters()">
+                  Apply Filters
+                </button>
+                <button class="btn btn-outline" style="width:100%" onclick="resetExplorer()">
+                  Reset
+                </button>
+              </div>
+
+              <!-- Active filter tags -->
+              <div id="exp-active-filters" style="margin-top:12px;display:none">
+                <div style="font-size:.72rem;color:var(--text3);margin-bottom:6px">Active filters</div>
+                <div id="exp-filter-tags" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+              </div>
+
+              <div class="panel"
+                style="margin-top:14px;padding:16px;background:rgba(96,165,250,.05);border-color:rgba(96,165,250,.25)">
+                <div
+                  style="font-size:.72rem;color:var(--blue);font-weight:600;margin-bottom:8px;letter-spacing:.05em;text-transform:uppercase">
+                  Data Note</div>
+                <p style="font-size:.78rem;color:var(--text2);line-height:1.55">
+                  All distributions reflect live Synthea data from the DuckDB database.
+                </p>
+                <p
+                  style="font-size:.78rem;color:var(--text2);line-height:1.55;margin-top:8px;padding-top:8px;border-top:1px solid rgba(96,165,250,.2)">
+                  <strong>Logic Tip:</strong> Cohorts are mutually exclusive. For example, "At Risk" patients have 0
+                  chronic diagnoses; selecting a condition like Diabetes with the At Risk cohort will yield 0 results.
+                </p>
+              </div>
+            </div>
+
+            <!-- ── Results Panel ──────────────────────────────────── -->
+            <div id="exp-results" style="flex:1;min-width:0">
+              <div style="padding:80px;text-align:center">
+                <div style="font-size:2rem;margin-bottom:12px;color:var(--border2)">⟳</div>
+                <div style="color:var(--text3);font-size:.9rem">
+                  Choose filters and click <strong style="color:var(--text)">Apply Filters</strong> to explore the
+                  population.
+                </div>
+              </div>
+            </div>
+
+            <!-- ── AI Insights Assistant (NEW) ────────────────────── -->
+            <div style="width:280px;flex-shrink:0">
+              <div class="panel" style="padding:20px;border-top:2px solid var(--purple)">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+                  <span style="font-size:1.2rem">✨</span>
+                  <div style="font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;
+                              color:var(--text3);font-weight:600">
+                    Analytics Assistant
+                  </div>
+                </div>
+
+                <div id="ai-explorer-chat"
+                  style="height:280px;overflow-y:auto;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:14px;font-size: .8rem;line-height:1.4">
+                  <div style="color:var(--text3);text-align:center;margin-top:40px">
+                    Ask about population metrics or risk definitions.
+                  </div>
+                </div>
+
+                <div style="margin-bottom:12px;display:flex;flex-wrap:wrap;gap:5px">
+                  <button class="btn btn-outline" style="font-size:.65rem;padding:4px 8px"
+                    onclick="quickInsight('Explain Emergency Tier')">Explain Tiers</button>
+                  <button class="btn btn-outline" style="font-size:.65rem;padding:4px 8px"
+                    onclick="quickInsight('What is HbA1c threshold?')">HbA1c Logic</button>
+                </div>
+
+                <div style="display:flex;gap:6px">
+                  <input type="text" id="ai-explorer-input" placeholder="Ask a question..."
+                    style="flex:1;background:var(--bg2);border:1px solid var(--border2);border-radius:6px;padding:8px 10px;font-size:.8rem;outline:none">
+                  <button class="btn btn-primary" style="padding:8px" onclick="askExplorerAI()">
+                    Ask
+                  </button>
+                </div>
+              </div>
+            </div>
+
+          </div><!-- /flex row -->
+        </div><!-- /exp-pane-population -->
+
+        <!-- ══ Tab 2: Predictive Modeling ══════════════════════════════ -->
+        <div id="exp-pane-predictive" style="display:none">
+
+          <div id="exp-tab-predict" class="exp-tab-panel">
+            <div style="padding:20px 20px 0 20px;max-width:500px">
+              <h3 style="color:var(--text);font-size:1rem;font-weight:600;margin-bottom:6px">6-Month Risk Prediction
+              </h3>
+              <p style="color:var(--text2);font-size:.85rem;margin-bottom:16px">Enter a patient ID from the chronic
+                cohort</p>
+              <input id="pred-patient-id" type="text" placeholder="Enter Patient ID or search by name" style="width:100%;padding:10px;margin-bottom:6px;
+                            background:var(--bg3);color:var(--text);
+                            border:1px solid var(--border2);border-radius:6px;
+                            font-family:inherit;font-size:.88rem;outline:none">
+              <div style="font-size:.75rem;color:var(--text3);margin-bottom:10px">
+                Tip: Copy patient ID from Patient Search
+              </div>
+              <button onclick="runPrediction()" style="width:100%;padding:10px;
+                             background:var(--accent);color:#ffffff;
+                             border:none;border-radius:6px;cursor:pointer;
+                             font-weight:600;font-family:inherit;font-size:.9rem">
+                Run Prediction
+              </button>
+            </div>
+            <div id="pred-results" style="display:none;margin-top:10px;padding:0 20px 20px 20px"></div>
+          </div>
+
+        </div><!-- /exp-pane-predictive -->
+
+      </div>
+    </div><!-- /content -->
+  </main>
+
+  <script src="{% static 'js/dashboard.js' %}"></script>
+  <!-- GLOBAL AI CHATBOT HOOKS -->
+  <div class="ai-fab" id="ai-fab" onclick="toggleGlobalChat()">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+      stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+    </svg>
+  </div>
+
+  <div class="ai-chat-window" id="ai-chat-window">
+    <div class="ai-chat-header">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <div style="width:10px; height:10px; border-radius:50%; background:var(--green)"></div>
+        <span style="font-weight:600; font-size:.9rem">CareGap Clinical Assistant</span>
+      </div>
+      <button onclick="toggleGlobalChat()" style="background:none; border:none; color:var(--text3); cursor:pointer;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+    <div class="ai-chat-body" id="global-chat-body">
+      <div class="msg msg-ai">
+        Hello! I am your clinical assistant. I can help you understand patient risks, analyze population data, or
+        explain clinical guidelines.
+      </div>
+    </div>
+    <div class="ai-chat-footer">
+      <input type="text" id="global-chat-input" placeholder="Type a clinical question..."
+        style="flex:1; padding:10px; border:1px solid var(--border2); border-radius:10px; outline:none; font-family:inherit; font-size:.85rem;">
+      <button class="btn btn-primary" onclick="sendGlobalChat()" style="padding:8px 14px; border-radius:10px;">
+        Send
+      </button>
+    </div>
+  </div>
+
+</body>
+
+</html>
